@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: timescale-config
+  labels:
+    app: timescale
+data:
+  POSTGRES_PASSWORD: password
+  
