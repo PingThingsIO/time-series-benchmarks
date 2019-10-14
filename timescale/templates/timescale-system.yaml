@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: timescale-config
+  namespace: {{ (datasource "config").NamespacePrefix }}timescale
+  labels:
+    app: timescale
+data:
+  POSTGRES_PASSWORD: password
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: timescale
+  namespace: {{ (datasource "config").NamespacePrefix }}timescale
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: timescale
+    spec:
+      containers:
+        - name: timescale
+          image: timescale/timescaledb:latest-pg11
+          imagePullPolicy: "IfNotPresent"
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - configMapRef:
+                name: timescale-config
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: timescaledb
+              subPath: data
+      volumes:
+        - name: timescaledb
+          persistentVolumeClaim:
+            claimName: timescale-pv-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: timescale
+  namespace: {{ (datasource "config").NamespacePrefix }}timescale
+  labels:
+    app: timescale
+spec:
+  type: NodePort
+  ports:
+   - port: 5432
+  selector:
+   app: timescale
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: timescale-pv-claim
+  namespace: {{ (datasource "config").NamespacePrefix }}timescale
+  labels:
+    app: timescale
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ (datasource "config").Timescale.StorageSize }}

@@ -1,0 +1,6 @@
+# for the namespaces that are created
+NamespacePrefix: "benchmarks-"
+
+# Parameters for each database:
+Timescale:
+  StorageSize: "5Gi"
