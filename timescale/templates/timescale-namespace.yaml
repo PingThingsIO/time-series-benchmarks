@@ -1,4 +1,4 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: {{ (datasource "config").NamespacePrefix }}timescale
+  name: {{ (datasource "config").Deployment.NamespacePrefix }}timescale

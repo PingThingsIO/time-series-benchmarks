@@ -1,6 +1,36 @@
-# for the namespaces that are created
-NamespacePrefix: "benchmarks-"
+Deployment:
+  # for the namespaces that are created
+  NamespacePrefix: "benchmarks-"
 
-# Parameters for each database:
-Timescale:
-  StorageSize: "5Gi"
+  # Parameters for each database:
+  Timescale:
+    StorageSize: "100Gi"
+
+
+Benchmarking:
+  # Parameters common to all databases, can be overriden in specific db's
+  Common:
+    InsertNumStreams: 1
+    InsertSpanSeconds: 300
+    InsertSubsample: 1
+    InsertTSJitter: false
+    Insert32Bit: false
+    SequentialReadParallelNum: 50
+    SmallAggregationWindowSize: 1000000000
+  PredictiveGrid:
+    InsertBatchSize: 50000
+  Timescale:
+    InsertBatchSize: 100
+    UseCommon: true
+
+Endpoints:
+  PredictiveGrid:
+    CollectionPrefix: benchmarking
+    Endpoint: api.husky.predictivegrid.com:4411
+    APIKey: <enter>
+    ReadBatchSize: 500
+  Timescale:
+    Password: <enter>
+    Endpoint: 127.0.0.1:5432
+    Database: postgres
+    Username: postgres
