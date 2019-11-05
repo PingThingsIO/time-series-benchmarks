@@ -2,11 +2,14 @@ package seedds
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 
 	"github.com/PingThingsIO/time-series-benchmarks/pkg/iface"
+	"github.com/xitongsys/parquet-go-source/buffer"
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/reader"
+	"github.com/xitongsys/parquet-go/source"
 )
 
 type seedDS struct {
@@ -23,12 +26,14 @@ func NewSeedDataSource(path string) iface.DataSource {
 		log.Println("Can't open file")
 		return nil
 	}
+	defer fr.Close()
 
 	pr, err := reader.NewParquetReader(fr, new(PMUDevice), 4)
 	if err != nil {
 		log.Println("Can't create parquet reader", err)
 		return nil
 	}
+	defer pr.ReadStop()
 
 	// get first point
 	points := make([]PMUDevice, 1)
@@ -41,9 +46,6 @@ func NewSeedDataSource(path string) iface.DataSource {
 	numSamples := pr.GetNumRows()
 	skip := int64(numSamples - 2)
 	pr.SkipRows(skip)
-
-	pr.ReadStop()
-	fr.Close()
 
 	// 1546300800000000000 == 2019/1/1
 	return &seedDS{
@@ -65,22 +67,15 @@ func (ds *seedDS) EndTime() int64 {
 	return ds.end
 }
 
-func enqueue(ch chan []iface.Point, streamIndex int, ds *seedDS, p *iface.MaterializePMUParams) {
-	parallelReaders := int64(4)
-
-	fr, err := local.NewLocalFileReader(ds.path)
-	if err != nil {
-		log.Println("Can't open file")
-		return
-	}
-	defer fr.Close()
+func enqueue(ch chan []iface.Point, fr source.ParquetFile, streamIndex int, ds *seedDS, p *iface.MaterializePMUParams) {
+	parallelReaders := int64(1)
 
 	// create new reader
 	pr, err := reader.NewParquetReader(fr, new(PMUDevice), parallelReaders)
+	log.Println(streamIndex)
 	if err != nil {
 		panic(err)
 	}
-	defer pr.ReadStop()
 
 	cursor := ds.start
 	prevTime := int64(0)
@@ -98,6 +93,7 @@ func enqueue(ch chan []iface.Point, streamIndex int, ds *seedDS, p *iface.Materi
 		}
 
 		if len(times) == 0 {
+			pr.ReadStop()
 			pr, err = reader.NewParquetReader(fr, new(PMUDevice), parallelReaders)
 			if err != nil {
 				panic(err)
@@ -144,6 +140,7 @@ func enqueue(ch chan []iface.Point, streamIndex int, ds *seedDS, p *iface.Materi
 
 		}
 	}
+	pr.ReadStop()
 
 }
 
@@ -156,13 +153,26 @@ func (ds *seedDS) MaterializePMU(p *iface.MaterializePMUParams) []chan []iface.P
 		p.SubSample = 1
 	}
 
+	data, err := ioutil.ReadFile(ds.path)
+	if err != nil {
+		panic(err)
+	}
+
+	fr, err := buffer.NewBufferFile(data)
+	if err != nil {
+		log.Println("Can't open file")
+		panic(err)
+	}
+
 	ds.end = ds.start + int64(p.Timespan)
 	rv := make([]chan []iface.Point, p.NumStreams)
 
 	for i := 0; i < p.NumStreams; i++ {
 		rv[i] = make(chan []iface.Point, 3)
 		parquetColumnIndex := i % 15
-		go enqueue(rv[i], parquetColumnIndex, ds, p)
+		go func(ch chan []iface.Point) {
+			enqueue(ch, fr, parquetColumnIndex, ds, p)
+		}(rv[i])
 	}
 
 	return rv
