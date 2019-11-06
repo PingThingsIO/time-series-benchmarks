@@ -2,6 +2,7 @@ package seedds
 
 import (
 	"log"
+	"math"
 
 	"github.com/PingThingsIO/time-series-benchmarks/pkg/iface"
 	"github.com/xitongsys/parquet-go-source/local"
@@ -56,72 +57,58 @@ func (ds *seedDS) EndTime() int64 {
 	return ds.end
 }
 
-func buildTimes(times []int64, ds *seedDS, p *iface.MaterializePMUParams) (results []int64) {
-	log.Printf("enter buildTimes: start: %d, end: %d", ds.start, ds.end)
+func enqueue(ch chan []iface.Point, offsets []int64, values []float64, ds *seedDS, p *iface.MaterializePMUParams) {
+
+	counter := 0
 	cursor := ds.start
 	prevTime := int64(0)
-	offset := ds.start
+	boundary := ds.start
+	batch := make([]iface.Point, 0, p.BatchSize)
 	period := int64((1000000000 / 120) * p.SubSample)
+	period120 := float64(8333333)
+	period120i := int64(8333333)
 
 	for cursor < ds.end {
 
-		// loop through available time offsets
-		for idx := 0; idx < len(times); idx++ {
+		// create points and add to batch
+		for idx := 0; idx < len(offsets); idx += p.SubSample {
 
 			// do not add first timestamp to ds.start
 			if prevTime > 0 {
-				cursor = times[idx] + offset
+				cursor = offsets[idx] + boundary
 			}
 
+			// remove jitter if requested
 			if !p.TSJitter {
-				// TODO remove jitter
-				// add 500 nanoseconds, then divide by 1000, multiply by 1000
+				baseTime := int64(cursor / int64(1e9))
+				ns := cursor % int64(1e9)
+				increment := int64(math.Round(float64(ns+500) / period120))
+				cursor = int64(baseTime*1e9) + ((increment*period120i)/1000)*1000
 			}
 
+			// add point
 			if cursor < ds.end {
-				results = append(results, cursor)
+				batch = append(batch, iface.Point{Time: cursor, Value: values[idx]})
 				prevTime = cursor
+				counter++
 			}
 
-		}
-
-		offset = prevTime + period
-
-	}
-	return results
-}
-
-func enqueue(ch chan []iface.Point, times []int64, values []float64, p *iface.MaterializePMUParams) {
-	batch := make([]iface.Point, 0, p.BatchSize)
-	timeIndex := 0
-
-	// loop until last time reached
-	for timeIndex < len(times) {
-
-		// loop through our seed data and create points
-		for _, val := range values {
-
-			// TODO handle SubSample
-			// if timeIndex%p.SubSample != 0 {
-			// 	continue
-			// }
-
-			batch = append(batch, iface.Point{Time: times[timeIndex], Value: val})
-			timeIndex += p.SubSample
-
-			// send batch
-			if len(batch) == p.BatchSize || timeIndex == len(times) {
+			// send batch if full or we've reached the end
+			if len(batch) == p.BatchSize || cursor >= ds.end {
 				ch <- batch
 				batch = make([]iface.Point, 0, p.BatchSize)
+
+				// break if finished
+				if cursor >= ds.end {
+					break
+				}
 			}
 
-			// exit if we've reached the end of time
-			if timeIndex == len(times) {
-				break
-			}
 		}
-	}
 
+		// add next time step as time offsets are zero based
+		boundary = prevTime + period
+	}
 	close(ch)
 }
 
@@ -134,15 +121,11 @@ func (ds *seedDS) MaterializePMU(p *iface.MaterializePMUParams) []chan []iface.P
 	}
 	ds.end = ds.start + int64(p.Timespan)
 	data, offsets := extract(ds.path, p.TruncateValue)
-
-	// TODO do not pre build the time array
-	times := buildTimes(offsets, ds, p)
-
 	rv := make([]chan []iface.Point, p.NumStreams)
 
 	for i := 0; i < p.NumStreams; i++ {
 		rv[i] = make(chan []iface.Point, 3)
-		go enqueue(rv[i], times, data[i%15], p)
+		go enqueue(rv[i], offsets, data[i%15], ds, p)
 	}
 
 	return rv
