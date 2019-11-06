@@ -13,6 +13,9 @@ import (
 
 func TestSequentialReadSingleStream(t *testing.T) {
 	ctx := Context(t)
+	if ctx.T == nil {
+		panic("here")
+	}
 	checkInsertion(ctx)
 
 	db := ctx.DB()
@@ -30,6 +33,7 @@ func TestSequentialReadSingleStream(t *testing.T) {
 	for arr := range chanpts {
 		totalpts += len(arr)
 	}
+	fmt.Printf("query channel ended\n")
 	delta := time.Since(start)
 	deltams := float64(delta/1000) / 1000
 	err = <-chanerr

@@ -5,21 +5,25 @@ Deployment:
   # Parameters for each database:
   Timescale:
     StorageSize: "100Gi"
+  Influx:
+    StorageSize: "100Gi"
 
 
 Benchmarking:
   # Parameters common to all databases, can be overriden in specific db's
   Common:
     InsertNumStreams: 1
-    InsertSpanSeconds: 300
+    InsertSpanSeconds: 60
     InsertSubsample: 1
     InsertTSJitter: false
     Insert32Bit: false
-    SequentialReadParallelNum: 50
+    SequentialReadParallelNum: 1
     SmallAggregationWindowSize: 1000000000
   PredictiveGrid:
     InsertBatchSize: 50000
   Timescale:
+    InsertBatchSize: 100
+  Influx:
     InsertBatchSize: 100
     UseCommon: true
 
@@ -34,3 +38,5 @@ Endpoints:
     Endpoint: 127.0.0.1:5432
     Database: postgres
     Username: postgres
+  Influx:
+    Endpoint: http://127.0.0.1:8086

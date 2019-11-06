@@ -102,6 +102,9 @@ func (tc *TestContext) Child(param string, value interface{}) *TestContext {
 }
 
 func (tc *TestContext) DB() iface.AbstractDatabase {
+	if tc.T == nil {
+		panic("why is T nil?")
+	}
 	rv, err := Factory.Initialize(tc.BC.Config)
 	if err != nil {
 		tc.T.Fatalf("target failed to initialize: %v", err)
@@ -115,6 +118,10 @@ var _ require.TestingT = &TestContext{}
 
 func Context(t *testing.T) *TestContext {
 	v := reflect.ValueOf(*t)
+	fmt.Printf("Context called\n")
+	if t == nil {
+		panic("why is T nil ehre ")
+	}
 	name := v.FieldByName("name").String()
 	ctx, cancel := context.WithCancel(context.Background())
 	return &TestContext{

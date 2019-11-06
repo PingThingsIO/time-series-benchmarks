@@ -1,3 +1,5 @@
+// +build ignore
+
 package benchmarks
 
 import timescale "github.com/PingThingsIO/time-series-benchmarks/timescale/driver"

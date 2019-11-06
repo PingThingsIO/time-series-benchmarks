@@ -20,7 +20,7 @@ var dataInsertion = sync.Once{}
 
 //insertionInfo records information about the streams that the dataset was
 //inserted into, for use by subsequent tests
-var insertionInfo tinsertionInfo
+var insertionInfo tInsertionData
 
 //doinsert actually performs the insert. Pulled out to avoid duplication
 func doinsert(ctx *TestContext) {
@@ -29,7 +29,6 @@ func doinsert(ctx *TestContext) {
 
 	//TODO this should be parameterized?
 	ds := dummyds.NewDummyDataSource()
-
 	//Store the data source so that tests can query it for information
 	insertionInfo.Source = ds
 
@@ -69,8 +68,8 @@ func doinsert(ctx *TestContext) {
 
 	var insertedpoints uint64
 
+	//For the whole test time (create, barrier, insert, barrier)
 	start := time.Now()
-
 	for idx, src := range sources {
 		go func(idx int, src chan []iface.Point) {
 			uu := uuid.NewRandom()
@@ -82,9 +81,12 @@ func doinsert(ctx *TestContext) {
 				ctx.FailNow()
 				return
 			}
+			//Signal we are done, and wait for others to finish creating
 			creationWG.Done()
 			creationWG.Wait()
 			createReport.Do(func() {
+				//TODO real reporting
+				//TODO standalone worker for reporting?
 				nw := time.Now()
 				delta := nw.Sub(start)
 				deltams := float64(delta/1000) / 1000
@@ -139,7 +141,11 @@ func TestInsert(t *testing.T) {
 
 func checkInsertion(ctx *TestContext) {
 	dataInsertion.Do(func() {
+		if ctx.T == nil {
+			panic("here")
+		}
 		child := ctx.Child("dependency", "insert")
+		child.T = ctx.T
 		doinsert(child)
 	})
 }
