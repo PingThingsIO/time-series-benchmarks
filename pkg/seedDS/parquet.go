@@ -26,7 +26,14 @@ type PMUDevice struct {
 	Timestamp *int64   `parquet:"name=timestamp, type=INT64, repetitiontype=OPTIONAL"`
 }
 
-func extract(path string, truncate bool) (fvalues [15][]float64, times []int64) {
+func transform(val float64, truncate bool) float64 {
+	if truncate {
+		return float64(float32(val))
+	}
+	return val
+}
+
+func extract(path string, truncate bool) ([][]float64, []int64) {
 	fr, err := local.NewLocalFileReader(path)
 	if err != nil {
 		panic(err)
@@ -39,38 +46,46 @@ func extract(path string, truncate bool) (fvalues [15][]float64, times []int64) 
 	}
 	defer pr.ReadStop()
 
-	for true {
+	// initialize arrays
+	l := pr.GetNumRows()
+	times := make([]int64, 0, l)
+	values := make([][]float64, 15)
+	for i := 0; i < len(values); i++ {
+		values[i] = make([]float64, 0, l)
+	}
 
-		data := make([]PMUDevice, 50)
+	// number of records we should read at once from parquet
+	parquetBatchSize := 5000
+
+	for {
+
+		data := make([]PMUDevice, parquetBatchSize)
 		if err = pr.Read(&data); err != nil {
 			panic(err)
 		}
 		if len(data) == 0 {
-			log.Printf("exhausted seed file: total points: %d", len(fvalues[0]))
+			log.Printf("exhausted seed file: total points: %d (cap: %d)", len(values[0]), cap(values[0]))
 			break
 		}
 
-		// TODO truncate values
-
 		for _, d := range data {
-			fvalues[0] = append(fvalues[0], *d.VPHMA)
-			fvalues[1] = append(fvalues[1], *d.VPHMB)
-			fvalues[2] = append(fvalues[2], *d.VPHMC)
-			fvalues[3] = append(fvalues[3], *d.VPHAA)
-			fvalues[4] = append(fvalues[4], *d.VPHAB)
-			fvalues[5] = append(fvalues[5], *d.VPHAC)
-			fvalues[6] = append(fvalues[6], *d.IPHMA)
-			fvalues[7] = append(fvalues[7], *d.IPHMB)
-			fvalues[8] = append(fvalues[8], *d.IPHMC)
-			fvalues[9] = append(fvalues[9], *d.IPHAA)
-			fvalues[10] = append(fvalues[10], *d.IPHAB)
-			fvalues[11] = append(fvalues[11], *d.IPHAC)
-			fvalues[12] = append(fvalues[12], *d.FREQ)
-			fvalues[13] = append(fvalues[13], *d.DFDT)
-			fvalues[14] = append(fvalues[14], float64(*d.DIGI))
+			values[0] = append(values[0], transform(*d.VPHMA, truncate))
+			values[1] = append(values[1], transform(*d.VPHMB, truncate))
+			values[2] = append(values[2], transform(*d.VPHMC, truncate))
+			values[3] = append(values[3], transform(*d.VPHAA, truncate))
+			values[4] = append(values[4], transform(*d.VPHAB, truncate))
+			values[5] = append(values[5], transform(*d.VPHAC, truncate))
+			values[6] = append(values[6], transform(*d.IPHMA, truncate))
+			values[7] = append(values[7], transform(*d.IPHMB, truncate))
+			values[8] = append(values[8], transform(*d.IPHMC, truncate))
+			values[9] = append(values[9], transform(*d.IPHAA, truncate))
+			values[10] = append(values[10], transform(*d.IPHAB, truncate))
+			values[11] = append(values[11], transform(*d.IPHAC, truncate))
+			values[12] = append(values[12], transform(*d.FREQ, truncate))
+			values[13] = append(values[13], transform(*d.DFDT, truncate))
+			values[14] = append(values[14], float64(*d.DIGI))
 			times = append(times, *d.Timestamp)
 		}
 	}
-	log.Println("exiting extract")
-	return fvalues, times
+	return values, times
 }

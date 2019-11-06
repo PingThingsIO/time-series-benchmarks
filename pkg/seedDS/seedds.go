@@ -37,9 +37,9 @@ func NewSeedDataSource(path string) iface.DataSource {
 	}
 	offset := points[0].Timestamp
 
-	// 1546300800000000000 == 2019/1/1
+	// 1388534400000000000 == 2014/1/1
 	return &seedDS{
-		start: 1546300800000000000 + *offset,
+		start: 1388534400000000000 + *offset,
 		end:   0,
 		path:  path,
 	}
@@ -73,10 +73,9 @@ func buildTimes(times []int64, ds *seedDS, p *iface.MaterializePMUParams) (resul
 				cursor = times[idx] + offset
 			}
 
-			// TODO handle offsets
-
 			if !p.TSJitter {
 				// TODO remove jitter
+				// add 500 nanoseconds, then divide by 1000, multiply by 1000
 			}
 
 			if cursor < ds.end {
@@ -96,15 +95,19 @@ func enqueue(ch chan []iface.Point, times []int64, values []float64, p *iface.Ma
 	batch := make([]iface.Point, 0, p.BatchSize)
 	timeIndex := 0
 
-	// TODO handle SubSample
-
 	// loop until last time reached
 	for timeIndex < len(times) {
 
 		// loop through our seed data and create points
 		for _, val := range values {
+
+			// TODO handle SubSample
+			// if timeIndex%p.SubSample != 0 {
+			// 	continue
+			// }
+
 			batch = append(batch, iface.Point{Time: times[timeIndex], Value: val})
-			timeIndex++
+			timeIndex += p.SubSample
 
 			// send batch
 			if len(batch) == p.BatchSize || timeIndex == len(times) {
@@ -130,19 +133,16 @@ func (ds *seedDS) MaterializePMU(p *iface.MaterializePMUParams) []chan []iface.P
 		p.SubSample = 1
 	}
 	ds.end = ds.start + int64(p.Timespan)
-	data, offsets := extract(ds.path, false)
+	data, offsets := extract(ds.path, p.TruncateValue)
+
+	// TODO do not pre build the time array
 	times := buildTimes(offsets, ds, p)
+
 	rv := make([]chan []iface.Point, p.NumStreams)
 
 	for i := 0; i < p.NumStreams; i++ {
 		rv[i] = make(chan []iface.Point, 3)
-
-		// go func(ch chan []iface.Point, times []int64, values []float64) {
-		// 	enqueue(ch, times, values, p)
-		// }(rv[i], times, data[i%15])
-
 		go enqueue(rv[i], times, data[i%15], p)
-
 	}
 
 	return rv
