@@ -1,8 +1,6 @@
 package seedds
 
 import (
-	"log"
-
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/reader"
 )
@@ -64,7 +62,6 @@ func extract(path string, truncate bool) ([][]float64, []int64) {
 			panic(err)
 		}
 		if len(data) == 0 {
-			log.Printf("exhausted seed file: total points: %d (cap: %d)", len(values[0]), cap(values[0]))
 			break
 		}
 

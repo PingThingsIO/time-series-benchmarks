@@ -20,21 +20,22 @@ func NewSeedDataSource(path string) iface.DataSource {
 	fr, err := local.NewLocalFileReader(path)
 	if err != nil {
 		log.Println("Can't open file")
-		return nil
+		panic(err)
 	}
 	defer fr.Close()
 
 	pr, err := reader.NewParquetReader(fr, new(PMUDevice), 4)
 	if err != nil {
 		log.Println("Can't create parquet reader", err)
-		return nil
+		panic(err)
 	}
 	defer pr.ReadStop()
 
 	// get first point so we know initial offset
 	points := make([]PMUDevice, 1)
 	if err = pr.Read(&points); err != nil {
-		log.Println("Read error", err)
+		log.Println("Parquet read error", err)
+		panic(err)
 	}
 	offset := points[0].Timestamp
 
