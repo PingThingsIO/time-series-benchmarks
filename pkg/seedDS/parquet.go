@@ -1,7 +1,6 @@
 package seedds
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/xitongsys/parquet-go-source/local"
@@ -27,37 +26,51 @@ type PMUDevice struct {
 	Timestamp *int64   `parquet:"name=timestamp, type=INT64, repetitiontype=OPTIONAL"`
 }
 
-// Open "sample-pmu-seed-dataset.parquet.gzip"
-func Open(path string) {
-	filename := path
-	fr, err := local.NewLocalFileReader(filename)
+func extract(path string, truncate bool) (fvalues [15][]float64, times []int64) {
+	fr, err := local.NewLocalFileReader(path)
 	if err != nil {
-		log.Println("Can't open file")
-		return
+		panic(err)
 	}
-	fmt.Println("file opened")
+	defer fr.Close()
 
 	pr, err := reader.NewParquetReader(fr, new(PMUDevice), 4)
 	if err != nil {
-		log.Println("Can't create parquet reader", err)
-		return
+		panic(err)
 	}
-	fmt.Println("reader created")
-	num := int(pr.GetNumRows())
-	fmt.Printf("Num Rows: %d\n", num)
+	defer pr.ReadStop()
 
-	for i := 0; i < 12; i++ {
-		stus := make([]PMUDevice, 1)
-		if err = pr.Read(&stus); err != nil {
-			log.Println("Read error", err)
+	for true {
+
+		data := make([]PMUDevice, 50)
+		if err = pr.Read(&data); err != nil {
+			panic(err)
 		}
-		fmt.Printf("%+v\n", stus[0])
+		if len(data) == 0 {
+			log.Printf("exhausted seed file: total points: %d", len(fvalues[0]))
+			break
+		}
 
-		// tmp := stus[0].VPHMA
-		fmt.Printf("Timestamp: %d, VPHMA: %f\n", *stus[0].Timestamp, *stus[0].VPHMA)
+		// TODO truncate values
+
+		for _, d := range data {
+			fvalues[0] = append(fvalues[0], *d.VPHMA)
+			fvalues[1] = append(fvalues[1], *d.VPHMB)
+			fvalues[2] = append(fvalues[2], *d.VPHMC)
+			fvalues[3] = append(fvalues[3], *d.VPHAA)
+			fvalues[4] = append(fvalues[4], *d.VPHAB)
+			fvalues[5] = append(fvalues[5], *d.VPHAC)
+			fvalues[6] = append(fvalues[6], *d.IPHMA)
+			fvalues[7] = append(fvalues[7], *d.IPHMB)
+			fvalues[8] = append(fvalues[8], *d.IPHMC)
+			fvalues[9] = append(fvalues[9], *d.IPHAA)
+			fvalues[10] = append(fvalues[10], *d.IPHAB)
+			fvalues[11] = append(fvalues[11], *d.IPHAC)
+			fvalues[12] = append(fvalues[12], *d.FREQ)
+			fvalues[13] = append(fvalues[13], *d.DFDT)
+			fvalues[14] = append(fvalues[14], float64(*d.DIGI))
+			times = append(times, *d.Timestamp)
+		}
 	}
-
-	pr.ReadStop()
-	fr.Close()
-	fmt.Println("bye")
+	log.Println("exiting extract")
+	return fvalues, times
 }
