@@ -20,7 +20,9 @@ Deployment:
 Benchmarking:
   # Parameters common to all databases, can be overriden in specific db's
   Common:
-    InsertNumStreams: 1
+    InsertNumStreams:
+    - 1
+    - 10
     InsertSpanSeconds: 60
     InsertSubsample: 1
     InsertTSJitter: false

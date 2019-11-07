@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/PingThingsIO/time-series-benchmarks/pkg/iface"
+	"github.com/davecgh/go-spew/spew"
 	client "github.com/influxdata/influxdb1-client/v2"
 	"github.com/pborman/uuid"
 )
@@ -62,10 +63,12 @@ func (prov *InfluxProvider) Initialize(cfg map[string]interface{}) (iface.Abstra
 func (db *InfluxDatabase) ObtainStream(id uuid.UUID) (iface.Stream, error) {
 
 	qry := fmt.Sprintf(`SELECT FIRST(value) FROM "%s"`, id.String())
+	fmt.Printf("qry is %s\n", qry)
 	res, err := db.client.Query(client.NewQuery(qry, dbname, ""))
 	if err != nil {
 		return nil, fmt.Errorf("couldn't execute query: %v", err)
 	}
+	spew.Dump(res)
 	if len(res.Results[0].Series) > 0 {
 		return &InfluxStream{
 			id: id,
