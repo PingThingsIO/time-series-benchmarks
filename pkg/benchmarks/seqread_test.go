@@ -41,7 +41,9 @@ func TestSequentialReadSingleStream(t *testing.T) {
 		ctx.FailNow()
 		return
 	}
-	fmt.Printf("read %d points in %.3fms (%.3f mpps)\n", totalpts, deltams, float64(totalpts)/deltams/1000)
+	ReportValue(ctx, "SingleStreamSequentialRead.Points", float64(totalpts))
+	ReportValue(ctx, "SingleStreamSequentialRead.Duration", deltams)
+	ReportValue(ctx, "SingleStreamSequentialRead.MPPS", float64(totalpts)/deltams/1000)
 }
 
 func TestSequentialReadParallelStream(t *testing.T) {
@@ -50,48 +52,51 @@ func TestSequentialReadParallelStream(t *testing.T) {
 
 	db := ctx.DB()
 
-	parallelism := ctx.ParamInt("SequentialReadParallelNum")
+	ParametricSweepInt(ctx, "SequentialReadParallelNum", func(ctx *TestContext, parallelism int) {
 
-	wgGetStreams := sync.WaitGroup{}
-	wgGetStreams.Add(parallelism)
-	wgComplete := sync.WaitGroup{}
-	wgComplete.Add(parallelism)
+		wgGetStreams := sync.WaitGroup{}
+		wgGetStreams.Add(parallelism)
+		wgComplete := sync.WaitGroup{}
+		wgComplete.Add(parallelism)
 
-	firstDone := sync.Once{}
-	var totalpoints uint64
-	for idx := 0; idx < parallelism; idx++ {
-		go func(idx int) {
-			uu := insertionInfo.UUIDs[idx]
-			stream, err := db.ObtainStream(uu)
-			if !assert.NoError(ctx, err) {
-				ctx.FailNow()
-				return
-			}
-			wgGetStreams.Done()
-			wgGetStreams.Wait()
+		firstDone := sync.Once{}
+		var totalpoints uint64
+		for idx := 0; idx < parallelism; idx++ {
+			go func(idx int) {
+				uu := insertionInfo.UUIDs[idx]
+				stream, err := db.ObtainStream(uu)
+				if !assert.NoError(ctx, err) {
+					ctx.FailNow()
+					return
+				}
+				wgGetStreams.Done()
+				wgGetStreams.Wait()
 
-			start := time.Now()
+				start := time.Now()
 
-			chanpts, chanerr := stream.QueryValues(insertionInfo.Source.StartTime(), insertionInfo.Source.EndTime())
-			for arr := range chanpts {
-				atomic.AddUint64(&totalpoints, uint64(len(arr)))
-			}
-			err = <-chanerr
-			if !assert.NoError(ctx, err) {
-				ctx.FailNow()
-				return
-			}
-			firstDone.Do(func() {
-				delta := time.Since(start)
-				deltams := float64(delta/1000) / 1000
-				totalpts := atomic.LoadUint64(&totalpoints)
-				fmt.Printf(" FULL parallel read %d points in %.3fms (%.3f mpps)\n", totalpts, deltams, float64(totalpts)/deltams/1000)
-			})
-			wgComplete.Done()
-		}(idx)
+				chanpts, chanerr := stream.QueryValues(insertionInfo.Source.StartTime(), insertionInfo.Source.EndTime())
+				for arr := range chanpts {
+					atomic.AddUint64(&totalpoints, uint64(len(arr)))
+				}
+				err = <-chanerr
+				if !assert.NoError(ctx, err) {
+					ctx.FailNow()
+					return
+				}
+				firstDone.Do(func() {
+					delta := time.Since(start)
+					deltams := float64(delta/1000) / 1000
+					totalpts := atomic.LoadUint64(&totalpoints)
+					ReportValue(ctx, "FullParallelSequentialRead.Points", float64(totalpts))
+					ReportValue(ctx, "FullParallelSequentialRead.Duration", deltams)
+					ReportValue(ctx, "FullParallelSequentialRead.MPPS", float64(totalpts)/deltams/1000)
+				})
+				wgComplete.Done()
+			}(idx)
+		}
+		wgComplete.Wait()
+	})
 
-	}
-	wgComplete.Wait()
 	//TODO partial parallel
 
 	//fmt.Printf("read %d points in %.3fms (%.3f mpps)\n", totalpts, deltams, float64(totalpts)/deltams/1000)

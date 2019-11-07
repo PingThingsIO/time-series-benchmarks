@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/PingThingsIO/time-series-benchmarks/pkg/iface"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/valyala/fastrand"
 )
 
@@ -34,6 +35,7 @@ func (ds *dummyDS) EndTime() int64 {
 }
 func (ds *dummyDS) MaterializePMU(p *iface.MaterializePMUParams) []chan []iface.Point {
 	fmt.Printf("materializepmu called\n")
+	spew.Dump(p)
 	rv := make([]chan []iface.Point, p.NumStreams)
 	if p.BatchSize == 0 {
 		panic("batch size cannot be zero")

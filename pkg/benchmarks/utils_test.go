@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"reflect"
 	"testing"
 
 	"github.com/PingThingsIO/time-series-benchmarks/pkg/iface"
@@ -37,8 +36,8 @@ type TestContext struct {
 	context.Context
 	cancel context.CancelFunc
 	T      *testing.T
-	name   string
-	BC     *BenchmarkContext
+	//	name   string
+	BC *BenchmarkContext
 }
 
 func (tc *TestContext) Param(name string) interface{} {
@@ -83,6 +82,11 @@ func (tc *TestContext) ParamInt(name string) int {
 func (tc *TestContext) ParamIntSlice(name string) []int {
 	val, ok := tc.Param(name).([]interface{})
 	if !ok {
+		//Perhaps it is just a single integer
+		val, ok := tc.Param(name).(int)
+		if ok {
+			return []int{val}
+		}
 		tc.T.Fatalf("expected parameter %q to be an integer array", name)
 	}
 	rv := make([]int, len(val))
@@ -91,12 +95,29 @@ func (tc *TestContext) ParamIntSlice(name string) []int {
 	}
 	return rv
 }
+func (tc *TestContext) ParamBoolSlice(name string) []bool {
+	val, ok := tc.Param(name).([]interface{})
+	if !ok {
+		//Perhaps it is just a single bool
+		val, ok := tc.Param(name).(bool)
+		if ok {
+			return []bool{val}
+		}
+		tc.T.Fatalf("expected parameter %q to be an integer array", name)
+	}
+	rv := make([]bool, len(val))
+	for i, v := range val {
+		rv[i] = v.(bool)
+	}
+	return rv
+}
 
-func (tc *TestContext) Child(param string, value interface{}) *TestContext {
+func (tc *TestContext) child() *TestContext {
+	sub, cancel := context.WithCancel(tc.Context)
 	return &TestContext{
-		Context: context.Background(),
+		Context: sub,
+		cancel:  cancel,
 		T:       nil, //will be set by caller
-		name:    fmt.Sprintf("%s,%s=%v", tc.name, param, value),
 		BC:      tc.BC,
 	}
 }
@@ -117,17 +138,13 @@ var setup *BenchmarkContext
 var _ require.TestingT = &TestContext{}
 
 func Context(t *testing.T) *TestContext {
-	v := reflect.ValueOf(*t)
-	fmt.Printf("Context called\n")
-	if t == nil {
-		panic("why is T nil ehre ")
-	}
-	name := v.FieldByName("name").String()
+	// v := reflect.ValueOf(*t)
+	// fmt.Printf("Context called\n")
+	// name := v.FieldByName("name").String()
 	ctx, cancel := context.WithCancel(context.Background())
 	return &TestContext{
 		Context: ctx,
 		cancel:  cancel,
-		name:    name,
 		T:       t,
 		BC:      setup,
 	}
@@ -171,7 +188,7 @@ func TestMain(m *testing.M) {
 func ParametricSweepInt(ctx *TestContext, name string, f func(ctx *TestContext, v int)) {
 	values := ctx.ParamIntSlice(name)
 	for _, v := range values {
-		subctx := ctx.Child(name, v)
+		subctx := ctx.child()
 		ctx.T.Run(fmt.Sprintf("%s=%v", name, v), func(t *testing.T) {
 			subctx.T = t
 			f(subctx, v)
@@ -179,10 +196,29 @@ func ParametricSweepInt(ctx *TestContext, name string, f func(ctx *TestContext, 
 	}
 }
 
+func ParametricSweepBool(ctx *TestContext, name string, f func(ctx *TestContext, v bool)) {
+	values := ctx.ParamBoolSlice(name)
+	for _, v := range values {
+		subctx := ctx.child()
+		ctx.T.Run(fmt.Sprintf("%s=%v", name, v), func(t *testing.T) {
+			subctx.T = t
+			f(subctx, v)
+		})
+	}
+}
+
+func (ctx *TestContext) Run(name string, f func(ctx *TestContext)) {
+	subctx := ctx.child()
+	ctx.T.Run(name, func(t *testing.T) {
+		subctx.T = t
+		f(subctx)
+	})
+}
+
 func Repeat(ctx *TestContext, name string, f func(ctx *TestContext, iteration int)) {
 	count := ctx.ParamInt(name)
 	for i := 0; i < count; i++ {
-		subctx := ctx.Child("iter", i)
+		subctx := ctx.child()
 		ctx.T.Run(fmt.Sprintf("iter=%d", i), func(t *testing.T) {
 			subctx.T = t
 			f(subctx, i)
