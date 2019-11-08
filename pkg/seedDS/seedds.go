@@ -3,6 +3,7 @@ package seedds
 import (
 	"log"
 	"math"
+	"math/rand"
 
 	"github.com/PingThingsIO/time-series-benchmarks/pkg/iface"
 	"github.com/xitongsys/parquet-go-source/local"
@@ -77,6 +78,11 @@ func enqueue(ch chan []iface.Point, offsets []int64, values []float64, ds *seedD
 			// do not add first timestamp to ds.start
 			if prevTime > 0 {
 				cursor = offsets[idx] + boundary
+			}
+
+			// random skip
+			if rand.Float64() < p.HoleProbability {
+				continue
 			}
 
 			// remove jitter if requested
