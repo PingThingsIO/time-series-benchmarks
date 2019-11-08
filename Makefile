@@ -2,6 +2,7 @@
 
 include timescale/Makefile.inc
 include influxdb/Makefile.inc
+include cluster.inc
 
 clean:
 	rm -rf build
