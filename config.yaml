@@ -1,3 +1,11 @@
+Cluster:
+  Name: tsb
+  KopsClusterName: tsb.predictivegrid.com
+  NodeCount: 2
+  NodeSize: m5.large
+  AvailabilityZone: us-east-2a
+
+
 Deployment:
   # for the namespaces that are created
   NamespacePrefix: "benchmarks-"

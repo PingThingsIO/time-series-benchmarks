@@ -13,6 +13,8 @@ type MaterializePMUParams struct {
 	TruncateValue bool
 	//How many points should be delivered in each array over the channel
 	BatchSize int
+	//What's the likelihood of dropping points
+	HoleProbability float64
 }
 
 type DataSource interface {
