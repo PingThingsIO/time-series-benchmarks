@@ -2,12 +2,13 @@
 
 include timescale/Makefile.inc
 include influxdb/Makefile.inc
+include testrunner/Makefile.inc
 include cluster.inc
 
 clean:
 	rm -rf build
 
-uninstall: timescale_uninstall influx_uninstall clean
+uninstall: timescale_uninstall influx_uninstall testrunner_uninstall clean
 
 
 .PONY: clean uninstall

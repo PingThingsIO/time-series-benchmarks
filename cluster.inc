@@ -15,9 +15,10 @@ cluster_teardown:
 	@go run cluster_create_envs.go
 	@echo
 	@read -p "Are you sure you want to delete this cluster? [Y/n] " answer; if [[ "$$answer" == "Y" ]]; then \
-	  eval $$(go run cluster_create_envs.go); kops delete cluster --state=$${KOPS_STATE_STORE} --name=$${KOPS_CLUSTER_NAME} --yes; \
+	  eval $$(go run cluster_create_envs.go); kops delete cluster --state=$${KOPS_STATE_STORE} --name=$${KOPS_CLUSTER_NAME}; \
 	else echo "Aborting..."; \
 	fi
 
+testrunner:
 
 .PHONY: cluster cluster_validate cluster_teardown

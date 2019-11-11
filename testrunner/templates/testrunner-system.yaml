@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: testrunner
+  namespace: {{ (datasource "config").Deployment.NamespacePrefix }}testrunner
+  labels:
+    app: testrunner
+spec:
+  containers:
+    - name: testrunner
+      image: ubuntu:xenial
+      command: ["/bin/bash","-c", "while true; do sleep 5; done"]
+      imagePullPolicy: "IfNotPresent"

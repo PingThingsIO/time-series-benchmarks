@@ -1,3 +1,5 @@
+// +build influx
+
 package benchmarks
 
 import influx "github.com/PingThingsIO/time-series-benchmarks/influxdb/driver"
