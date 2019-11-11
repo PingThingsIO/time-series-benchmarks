@@ -49,4 +49,4 @@ Endpoints:
     Database: postgres
     Username: postgres
   Influx:
-    Endpoint: http://127.0.0.1:8086
+    Endpoint: http://influx.benchmarks-influx:8086

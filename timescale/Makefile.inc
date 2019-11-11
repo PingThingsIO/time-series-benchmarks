@@ -15,4 +15,7 @@ timescale_system: timescale_templates
 timescale_uninstall: build/timescale/timescale-namespace.yaml
 	kubectl delete --ignore-not-found=true -f build/timescale/timescale-namespace.yaml
 
+timescale_benchmark: timescale_system testrunner
+	go test pkg/benchmarks -tags timescale -c -o build/timescale/timescale-benchmark
+
 .PHONY: timescale_system	timescale_uninstall

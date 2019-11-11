@@ -183,7 +183,7 @@ func TestMain(m *testing.M) {
 	}
 	m.Run()
 
-	writeReport()
+	writeReport("report.json")
 }
 
 func ParametricSweepInt(ctx *TestContext, name string, f func(ctx *TestContext, v int)) {
