@@ -176,13 +176,14 @@ func TestMain(m *testing.M) {
 		fmt.Printf("could not parse config file %q: %v\n", cfg, err)
 		os.Exit(1)
 	}
-	_ = cfg
+
 	//TODO parse config
 	setup = &BenchmarkContext{
 		Config: cfgmap,
 	}
 	m.Run()
 
+	writeReport()
 }
 
 func ParametricSweepInt(ctx *TestContext, name string, f func(ctx *TestContext, v int)) {
