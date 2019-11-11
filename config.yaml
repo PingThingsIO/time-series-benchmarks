@@ -1,6 +1,6 @@
 Cluster:
   Name: tsb
-  KopsClusterName: tsb.predictivegrid.com
+  KopsClusterName: tsb.k8s.local
   NodeCount: 2
   NodeSize: m5.large
   AvailabilityZone: us-east-2a

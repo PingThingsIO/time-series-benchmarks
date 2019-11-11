@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"strings"
 
@@ -36,8 +37,12 @@ func writeReport(name string) {
 		for {
 			l, err := rdr.ReadString('\n')
 			if err != nil {
+				if err == io.EOF {
+					break
+				}
 				panic(err)
 			}
+			l = strings.TrimSpace(l)
 			parts := strings.SplitN(l, "=", 2)
 			fingerprint[parts[0]] = parts[1]
 		}

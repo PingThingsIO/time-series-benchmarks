@@ -1,0 +1,3 @@
+#!/bin/bash
+eval $(go run cluster_create_envs.go)
+export PS1="($KOPS_CLUSTER_NAME) $PS1"

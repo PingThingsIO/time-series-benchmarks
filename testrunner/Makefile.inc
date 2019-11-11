@@ -13,7 +13,7 @@ testrunner_system: testrunner_templates
 	kubectl apply -f build/testrunner/testrunner-system.yaml
 
 fingerprint:
-	gen_fingerprint.sh > fingerprint.ini
+	testrunner/gen_fingerprint.sh > fingerprint.ini
 
 testrunner_uninstall: build/testrunner/testrunner-namespace.yaml
 	kubectl delete --ignore-not-found=true -f build/testrunner/testrunner-namespace.yaml
