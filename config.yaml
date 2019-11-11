@@ -44,8 +44,8 @@ Endpoints:
     APIKey: <enter>
     ReadBatchSize: 500
   Timescale:
-    Password: <enter>
-    Endpoint: 127.0.0.1:5432
+    Password: supersecurepassword
+    Endpoint: timescale.benchmarks-timescale:5432
     Database: postgres
     Username: postgres
   Influx:

@@ -11,7 +11,7 @@ build/influx/%.yaml: ${BASE_DIR}/templates/%.yaml
 
 influx_templates: build/influx/influx-namespace.yaml build/influx/influx-system.yaml
 
-influx_system: influx_templates
+influx_system: influx_templates testrunner_system
 	kubectl apply -f build/influx/influx-namespace.yaml
 	kubectl apply -f build/influx/influx-system.yaml
 
@@ -24,5 +24,5 @@ influx_benchmark: testrunner_system influx_system fingerprint
 	kubectl -n ${NSPREFIX} cp config.yaml testrunner:/
 	kubectl -n ${NSPREFIX} cp fingerprint.ini testrunner:/
 	kubectl -n ${NSPREFIX} exec -it testrunner /benchmark_influx
-	kubectl -n ${NSPREFIX} cp testrunner:/report.json .
+	kubectl -n ${NSPREFIX} cp testrunner:/report.json ./report-influx.json
 .PHONY: influx_system	influx_uninstall
