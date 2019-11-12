@@ -1,9 +1,13 @@
 package seedds
 
 import (
+	"fmt"
+	"io"
 	"log"
 	"math"
 	"math/rand"
+	"net/http"
+	"os"
 
 	"github.com/PingThingsIO/time-series-benchmarks/pkg/iface"
 	"github.com/xitongsys/parquet-go-source/local"
@@ -16,9 +20,20 @@ type seedDS struct {
 	path  string
 }
 
+var seedFileURL = "https://ni4ai-seed-data.s3.amazonaws.com/pmu-seed-dataset.parquet.gzip"
+var seedFilePath = "pmu-seed-dataset.parquet.gzip"
+
 // NewSeedDataSource does stuff like creating a new data source from the seed dataset
-func NewSeedDataSource(path string) iface.DataSource {
-	fr, err := local.NewLocalFileReader(path)
+func NewSeedDataSource() iface.DataSource {
+
+	if !fileExists(seedFilePath) {
+		err := downloadFile(seedFilePath, seedFileURL)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	fr, err := local.NewLocalFileReader(seedFilePath)
 	if err != nil {
 		log.Println("Can't open file")
 		panic(err)
@@ -44,7 +59,6 @@ func NewSeedDataSource(path string) iface.DataSource {
 	return &seedDS{
 		start: 1388534400000000000 + *offset,
 		end:   0,
-		path:  path,
 	}
 }
 
@@ -136,4 +150,42 @@ func (ds *seedDS) MaterializePMU(p *iface.MaterializePMUParams) []chan []iface.P
 	}
 
 	return rv
+}
+
+func downloadFile(filepath string, url string) (err error) {
+
+	// Create the file
+	f, err := os.OpenFile(seedFilePath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// Get the data
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Check server response
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad status: %s", resp.Status)
+	}
+
+	// Write to file
+	_, err = io.Copy(f, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
 }

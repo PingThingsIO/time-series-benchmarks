@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	dummyds "github.com/PingThingsIO/time-series-benchmarks/pkg/dummyDS"
 	"github.com/PingThingsIO/time-series-benchmarks/pkg/iface"
+	"github.com/PingThingsIO/time-series-benchmarks/pkg/seedds"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 )
@@ -27,8 +27,7 @@ func doinsert(ctx *TestContext) {
 
 	db := ctx.DB()
 
-	//TODO this should be parameterized?
-	ds := dummyds.NewDummyDataSource()
+	ds := seedds.NewSeedDataSource()
 
 	insertWithParameters := func(ctx *TestContext, p *iface.MaterializePMUParams) {
 		//Store the data source so that tests can query it for information
