@@ -23,11 +23,19 @@ Benchmarking:
     InsertNumStreams:
     - 1
     - 10
-    InsertSpanSeconds: 60
+    - 100
+    InsertSpanSeconds: 600
     InsertSubsample: 1
-    InsertTSJitter: false
-    Insert32Bit: false
-    SequentialReadParallelNum: 1
+    InsertTSJitter:
+    - false
+    - true
+    Insert32Bit:
+    - false
+    - true
+    SequentialReadParallelNum:
+    - 1
+    - 10
+    - 100
     SmallAggregationWindowSize: 1000000000
   PredictiveGrid:
     InsertBatchSize: 50000
@@ -35,7 +43,6 @@ Benchmarking:
     InsertBatchSize: 100
   Influx:
     InsertBatchSize: 100
-    UseCommon: true
 
 Endpoints:
   PredictiveGrid:

@@ -53,7 +53,6 @@ func TestSequentialReadParallelStream(t *testing.T) {
 	db := ctx.DB()
 
 	ParametricSweepInt(ctx, "SequentialReadParallelNum", func(ctx *TestContext, parallelism int) {
-
 		wgGetStreams := sync.WaitGroup{}
 		wgGetStreams.Add(parallelism)
 		wgComplete := sync.WaitGroup{}
