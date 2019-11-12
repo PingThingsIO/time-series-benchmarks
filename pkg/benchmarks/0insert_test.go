@@ -63,11 +63,11 @@ func doinsert(ctx *TestContext) {
 
 		//For the whole test time (create, barrier, insert, barrier)
 		start := time.Now()
+		var afterCreation time.Time
 		for idx, src := range sources {
 			go func(idx int, src chan []iface.Point) {
 				uu := uuid.NewRandom()
 				insertionInfo.UUIDs[idx] = uu
-				fmt.Printf("created %s\n", uu.String())
 				s, err := db.CreateStream(uu)
 				if !assert.NoError(ctx, err) {
 					creationWG.Done()
@@ -79,11 +79,10 @@ func doinsert(ctx *TestContext) {
 				creationWG.Done()
 				creationWG.Wait()
 				createReport.Do(func() {
-					//TODO real reporting
-					//TODO standalone worker for reporting?
 					nw := time.Now()
 					delta := nw.Sub(start)
 					deltams := float64(delta/1000) / 1000
+					afterCreation = nw
 					ReportValue(ctx, "StreamCreation", deltams)
 				})
 				startInsert := time.Now()
@@ -92,7 +91,7 @@ func doinsert(ctx *TestContext) {
 				defer cancel()
 				go func() {
 					for {
-						time.Sleep(3 * time.Second)
+						time.Sleep(10 * time.Second)
 						if progressctx.Err() != nil {
 							return
 						}
@@ -122,7 +121,11 @@ func doinsert(ctx *TestContext) {
 			}(idx, src)
 		}
 		completeWG.Wait()
-
+		delta := time.Now().Sub(afterCreation)
+		deltams := float64(delta/1000) / 1000
+		ReportValue(ctx, "Insert.Points", float64(insertedpoints))
+		ReportValue(ctx, "Insert.Duration", deltams)
+		ReportValue(ctx, "Insert.MPPS", float64(insertedpoints)/deltams/1000)
 	} // end of insert with parameters
 
 	//Multiple nested loops for each parameter

@@ -60,6 +60,7 @@ func TestSequentialReadParallelStream(t *testing.T) {
 
 		firstDone := sync.Once{}
 		var totalpoints uint64
+		begin := time.Now()
 		for idx := 0; idx < parallelism; idx++ {
 			go func(idx int) {
 				uu := insertionInfo.UUIDs[idx]
@@ -94,6 +95,11 @@ func TestSequentialReadParallelStream(t *testing.T) {
 			}(idx)
 		}
 		wgComplete.Wait()
+		delta := time.Since(begin)
+		deltams := float64(delta/1000) / 1000
+		ReportValue(ctx, "SequentialRead.Points", float64(totalpoints))
+		ReportValue(ctx, "SequentialRead.Duration", deltams)
+		ReportValue(ctx, "SequentialRead.MPPS", float64(totalpoints)/deltams/1000)
 	})
 
 	//TODO partial parallel

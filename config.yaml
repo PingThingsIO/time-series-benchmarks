@@ -24,7 +24,7 @@ Benchmarking:
     - 1
     - 5
     - 10
-    InsertSpanSeconds: 300
+    InsertSpanSeconds: 6000
     InsertSubsample: 1
     InsertTSJitter:
     - false

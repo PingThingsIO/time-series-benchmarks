@@ -7,20 +7,24 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
-
-	"github.com/davecgh/go-spew/spew"
+	"time"
 )
 
+//FinalReport is the structure of the final json file that is written
 type FinalReport struct {
 	Fingerprint map[string]string        `json:"fingerprint"`
 	Benchmarks  map[string][]TestResults `json:"benchmarks"`
 }
 
+//TestResults stores the results of a given test, across multiple
+//groups of parameters
 type TestResults struct {
 	Parameters map[string]string  `json:"parameters"`
 	Results    map[string]float64 `json:"results"`
 }
 
+//writeReport will take all values saved from ReportValue and write them
+//to the given json file
 func writeReport(name string) {
 
 	report := FinalReport{
@@ -47,6 +51,7 @@ func writeReport(name string) {
 			fingerprint[parts[0]] = parts[1]
 		}
 	}
+	fingerprint["time"] = time.Now().Format(time.RFC3339)
 
 	report.Fingerprint = fingerprint
 
@@ -81,8 +86,6 @@ func writeReport(name string) {
 	if err != nil {
 		panic(err)
 	}
-	//fmt.Printf("json: %s\n", string(jsonb))
-	//TODO write report
 }
 
 //reportData is TestName -> ParameterString -> Name -> Value
@@ -92,8 +95,8 @@ func init() {
 	reportData = make(map[string]map[string]map[string]float64)
 }
 
+//ReportValue will record a metric in the final performance report
 func ReportValue(ctx *TestContext, name string, value float64) {
-	fmt.Printf("parstring is %s\n", ctx.T.Name())
 	parts := strings.SplitN(ctx.T.Name(), "/", 2)
 	testname := parts[0]
 	var parstring string
@@ -109,6 +112,5 @@ func ReportValue(ctx *TestContext, name string, value float64) {
 		reportData[testname][parstring] = make(map[string]float64)
 	}
 	reportData[testname][parstring][name] = value
-	spew.Dump(reportData)
 	fmt.Printf(">>> %s :: %s = %f\n", ctx.T.Name(), name, value)
 }
