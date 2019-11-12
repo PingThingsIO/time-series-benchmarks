@@ -22,9 +22,9 @@ Benchmarking:
   Common:
     InsertNumStreams:
     - 1
+    - 5
     - 10
-    - 100
-    InsertSpanSeconds: 600
+    InsertSpanSeconds: 300
     InsertSubsample: 1
     InsertTSJitter:
     - false
@@ -35,7 +35,6 @@ Benchmarking:
     SequentialReadParallelNum:
     - 1
     - 10
-    - 100
     SmallAggregationWindowSize: 1000000000
   PredictiveGrid:
     InsertBatchSize: 50000

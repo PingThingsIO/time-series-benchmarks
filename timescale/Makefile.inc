@@ -20,7 +20,7 @@ timescale_benchmark: testrunner_system timescale_system fingerprint
 	kubectl -n ${NSPREFIX} cp build/benchmark_timescale testrunner:/
 	kubectl -n ${NSPREFIX} cp config.yaml testrunner:/
 	kubectl -n ${NSPREFIX} cp fingerprint.ini testrunner:/
-	kubectl -n ${NSPREFIX} exec -it testrunner /benchmark_timescale
+	kubectl -n ${NSPREFIX} exec -it testrunner /benchmark_timescale -test.timeout 5h -v
 	kubectl -n ${NSPREFIX} cp testrunner:/report.json ./report-timescale.json
 
 .PHONY: timescale_system	timescale_uninstall

@@ -23,6 +23,6 @@ influx_benchmark: testrunner_system influx_system fingerprint
 	kubectl -n ${NSPREFIX} cp benchmark_influx testrunner:/
 	kubectl -n ${NSPREFIX} cp config.yaml testrunner:/
 	kubectl -n ${NSPREFIX} cp fingerprint.ini testrunner:/
-	kubectl -n ${NSPREFIX} exec -it testrunner /benchmark_influx --test.timeout=5h -v
+	kubectl -n ${NSPREFIX} exec -it testrunner /benchmark_influx -test.timeout 5h -v
 	kubectl -n ${NSPREFIX} cp testrunner:/report.json ./report-influx.json
 .PHONY: influx_system	influx_uninstall
