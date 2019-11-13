@@ -3,6 +3,7 @@ package benchmarks
 import (
 	"context"
 	"fmt"
+	"log"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -37,7 +38,9 @@ func doinsert(ctx *TestContext) {
 
 		insertionInfo.UUIDs = make([]uuid.UUID, insertionInfo.Params.NumStreams)
 
+		log.Println("materializing test data")
 		sources := ds.MaterializePMU(insertionInfo.Params)
+		log.Println("materialization complete")
 		//Barrier to ensure that all the stream creation is done before
 		//inserts (to make metrics cleaner)
 		creationWG := sync.WaitGroup{}

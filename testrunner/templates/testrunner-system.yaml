@@ -12,3 +12,8 @@ spec:
       image: ubuntu:xenial
       command: ["/bin/bash","-c", "apt-get update; apt-get install -y ca-certificates; while true; do sleep 5; done"]
       imagePullPolicy: "IfNotPresent"
+      resources:
+        limits:
+          memory: 18Gi
+        requests:
+          memory: 18Gi
