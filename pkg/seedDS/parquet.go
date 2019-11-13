@@ -1,6 +1,8 @@
 package seedds
 
 import (
+	"fmt"
+
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/reader"
 )
@@ -34,7 +36,7 @@ func transform(val float64, truncate bool) float64 {
 func extract(path string, truncate bool) ([][]float64, []int64) {
 	fr, err := local.NewLocalFileReader(path)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("could not open path %s: %v", path, err))
 	}
 	defer fr.Close()
 

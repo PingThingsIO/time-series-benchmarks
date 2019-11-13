@@ -10,5 +10,5 @@ spec:
   containers:
     - name: testrunner
       image: ubuntu:xenial
-      command: ["/bin/bash","-c", "while true; do sleep 5; done"]
+      command: ["/bin/bash","-c", "apt-get update; apt-get install -y ca-certificates; while true; do sleep 5; done"]
       imagePullPolicy: "IfNotPresent"

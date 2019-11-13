@@ -17,7 +17,6 @@ import (
 type seedDS struct {
 	start int64
 	end   int64
-	path  string
 }
 
 var seedFileURL = "https://ni4ai-seed-data.s3.amazonaws.com/pmu-seed-dataset.parquet.gzip"
@@ -27,10 +26,12 @@ var seedFilePath = "pmu-seed-dataset.parquet.gzip"
 func NewSeedDataSource() iface.DataSource {
 
 	if !fileExists(seedFilePath) {
+		log.Println("seed data set not found, downloading")
 		err := downloadFile(seedFilePath, seedFileURL)
 		if err != nil {
 			panic(err)
 		}
+		log.Printf("download complete")
 	}
 
 	fr, err := local.NewLocalFileReader(seedFilePath)
@@ -141,7 +142,7 @@ func (ds *seedDS) MaterializePMU(p *iface.MaterializePMUParams) []chan []iface.P
 		p.SubSample = 1
 	}
 	ds.end = ds.start + int64(p.Timespan)
-	data, offsets := extract(ds.path, p.TruncateValue)
+	data, offsets := extract(seedFilePath, p.TruncateValue)
 	rv := make([]chan []iface.Point, p.NumStreams)
 
 	for i := 0; i < p.NumStreams; i++ {
@@ -155,11 +156,10 @@ func (ds *seedDS) MaterializePMU(p *iface.MaterializePMUParams) []chan []iface.P
 func downloadFile(filepath string, url string) (err error) {
 
 	// Create the file
-	f, err := os.OpenFile(seedFilePath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0644)
+	f, err := os.OpenFile(seedFilePath+".tmp", os.O_RDWR|os.O_CREATE|os.O_EXCL, 0644)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
 	// Get the data
 	resp, err := http.Get(url)
@@ -175,6 +175,13 @@ func downloadFile(filepath string, url string) (err error) {
 
 	// Write to file
 	_, err = io.Copy(f, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	f.Close()
+
+	err = os.Rename(seedFilePath+".tmp", seedFilePath)
 	if err != nil {
 		return err
 	}

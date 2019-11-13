@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/PingThingsIO/time-series-benchmarks/pkg/iface"
-	"github.com/PingThingsIO/time-series-benchmarks/pkg/seedds"
+	"github.com/PingThingsIO/time-series-benchmarks/pkg/seedDS"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 )
