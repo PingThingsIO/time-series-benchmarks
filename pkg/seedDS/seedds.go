@@ -8,59 +8,23 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/PingThingsIO/time-series-benchmarks/pkg/iface"
-	"github.com/xitongsys/parquet-go-source/local"
-	"github.com/xitongsys/parquet-go/reader"
 )
 
 type seedDS struct {
-	start int64
-	end   int64
+	start  int64
+	end    int64
+	local  string
+	remote string
 }
-
-var seedFileURL = "https://ni4ai-seed-data.s3.amazonaws.com/pmu-seed-dataset.parquet.gzip"
-var seedFilePath = "pmu-seed-dataset.parquet.gzip"
 
 // NewSeedDataSource does stuff like creating a new data source from the seed dataset
 func NewSeedDataSource() iface.DataSource {
 
-	if !fileExists(seedFilePath) {
-		log.Println("seed data set not found, downloading")
-		err := downloadFile(seedFilePath, seedFileURL)
-		if err != nil {
-			panic(err)
-		}
-		log.Printf("download complete")
-	}
+	return csvSeedDataSource()
 
-	fr, err := local.NewLocalFileReader(seedFilePath)
-	if err != nil {
-		log.Println("Can't open file")
-		panic(err)
-	}
-	defer fr.Close()
-
-	pr, err := reader.NewParquetReader(fr, new(PMUDevice), 4)
-	if err != nil {
-		log.Println("Can't create parquet reader", err)
-		panic(err)
-	}
-	defer pr.ReadStop()
-
-	// get first point so we know initial offset
-	points := make([]PMUDevice, 1)
-	if err = pr.Read(&points); err != nil {
-		log.Println("Parquet read error", err)
-		panic(err)
-	}
-	offset := points[0].Timestamp
-
-	// 1388534400000000000 == 2014/1/1
-	return &seedDS{
-		start: 1388534400000000000 + *offset,
-		end:   0,
-	}
 }
 
 func (ds *seedDS) StartTime() int64 {
@@ -74,6 +38,7 @@ func (ds *seedDS) EndTime() int64 {
 	return ds.end
 }
 
+// continuously drops points into a channel given some seed data
 func enqueue(ch chan []iface.Point, offsets []int64, values []float64, ds *seedDS, p *iface.MaterializePMUParams) {
 
 	counter := 0
@@ -142,7 +107,10 @@ func (ds *seedDS) MaterializePMU(p *iface.MaterializePMUParams) []chan []iface.P
 		p.SubSample = 1
 	}
 	ds.end = ds.start + int64(p.Timespan)
-	data, offsets := extract(seedFilePath, p.TruncateValue)
+
+	// data, offsets := parquetExtract(ds.local, p.TruncateValue)
+	data, offsets := csvExtract(ds.local, p.TruncateValue)
+
 	rv := make([]chan []iface.Point, p.NumStreams)
 
 	for i := 0; i < p.NumStreams; i++ {
@@ -153,10 +121,14 @@ func (ds *seedDS) MaterializePMU(p *iface.MaterializePMUParams) []chan []iface.P
 	return rv
 }
 
+// used to fetch parquet or csv seed file
 func downloadFile(filepath string, url string) (err error) {
 
+	t := time.Now()
+	defer func() { log.Printf("seed file downloaded: %s", time.Since(t)) }()
+
 	// Create the file
-	f, err := os.OpenFile(seedFilePath+".tmp", os.O_RDWR|os.O_CREATE|os.O_EXCL, 0644)
+	f, err := os.OpenFile(filepath+".tmp", os.O_RDWR|os.O_CREATE|os.O_EXCL, 0644)
 	if err != nil {
 		return err
 	}
@@ -178,17 +150,16 @@ func downloadFile(filepath string, url string) (err error) {
 	if err != nil {
 		return err
 	}
-
 	f.Close()
 
-	err = os.Rename(seedFilePath+".tmp", seedFilePath)
+	err = os.Rename(filepath+".tmp", filepath)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
+// simple check for file exists
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {

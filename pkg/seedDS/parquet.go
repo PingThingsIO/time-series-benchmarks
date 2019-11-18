@@ -2,7 +2,9 @@ package seedds
 
 import (
 	"fmt"
+	"log"
 
+	"github.com/PingThingsIO/time-series-benchmarks/pkg/iface"
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/reader"
 )
@@ -26,6 +28,50 @@ type PMUDevice struct {
 	Timestamp *int64   `parquet:"name=timestamp, type=INT64, repetitiontype=OPTIONAL"`
 }
 
+var parquetSeedFileURL = "https://ni4ai-seed-data.s3.amazonaws.com/pmu-seed-dataset.parquet.gzip"
+var parquetSeedFilePath = "pmu-seed-dataset.parquet.gzip"
+
+func parquetSeedDataSource() iface.DataSource {
+
+	if !fileExists(parquetSeedFilePath) {
+		log.Println("seed data set not found, downloading")
+		err := downloadFile(parquetSeedFilePath, parquetSeedFileURL)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	fr, err := local.NewLocalFileReader(parquetSeedFilePath)
+	if err != nil {
+		log.Println("Can't open file")
+		panic(err)
+	}
+	defer fr.Close()
+
+	pr, err := reader.NewParquetReader(fr, new(PMUDevice), 4)
+	if err != nil {
+		log.Println("Can't create parquet reader", err)
+		panic(err)
+	}
+	defer pr.ReadStop()
+
+	// get first point so we know initial offset
+	points := make([]PMUDevice, 1)
+	if err = pr.Read(&points); err != nil {
+		log.Println("Parquet read error", err)
+		panic(err)
+	}
+	offset := points[0].Timestamp
+
+	// 1388534400000000000 == 2014/1/1
+	return &seedDS{
+		start:  1388534400000000000 + *offset,
+		end:    0,
+		local:  parquetSeedFilePath,
+		remote: parquetSeedFileURL,
+	}
+}
+
 func transform(val float64, truncate bool) float64 {
 	if truncate {
 		return float64(float32(val))
@@ -33,7 +79,7 @@ func transform(val float64, truncate bool) float64 {
 	return val
 }
 
-func extract(path string, truncate bool) ([][]float64, []int64) {
+func parquetExtract(path string, truncate bool) ([][]float64, []int64) {
 	fr, err := local.NewLocalFileReader(path)
 	if err != nil {
 		panic(fmt.Errorf("could not open path %s: %v", path, err))
