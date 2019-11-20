@@ -1,8 +1,8 @@
 Cluster:
   Name: tsb
   KopsClusterName: tsb.k8s.local
-  NodeCount: 2
-  NodeSize: m5.large
+  NodeCount: 3
+  NodeSize: m5.2xlarge
   AvailabilityZone: us-east-2a
 
 
@@ -12,19 +12,18 @@ Deployment:
 
   # Parameters for each database:
   Timescale:
-    StorageSize: "100Gi"
+    StorageSize: "1000Gi"
   Influx:
-    StorageSize: "100Gi"
+    StorageSize: "1000Gi"
 
 
 Benchmarking:
   # Parameters common to all databases, can be overriden in specific db's
   Common:
     InsertNumStreams:
-    - 1
     - 5
     - 10
-    InsertSpanSeconds: 6000
+    InsertSpanSeconds: 20000
     InsertSubsample: 1
     InsertTSJitter:
     - false
@@ -46,8 +45,8 @@ Benchmarking:
 Endpoints:
   PredictiveGrid:
     CollectionPrefix: benchmarking
-    Endpoint: api.husky.predictivegrid.com:4411
-    APIKey: <enter>
+    Endpoint: btrdb-bootstrap.benchmarks-pg:4410
+    APIKey: ""
     ReadBatchSize: 500
   Timescale:
     Password: supersecurepassword

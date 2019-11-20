@@ -3,6 +3,7 @@
 include timescale/Makefile.inc
 include influxdb/Makefile.inc
 include testrunner/Makefile.inc
+include predictivegrid/Makefile.inc
 include cluster.inc
 
 clean:

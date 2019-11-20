@@ -60,11 +60,14 @@ func (ds *dummyDS) MaterializePMU(p *iface.MaterializePMUParams) []chan []iface.
 				if p.TruncateValue {
 					v = float64(float32(v))
 				}
-				point := iface.Point{Time: cursor, Value: v}
-				cursor += period
+
+				t := cursor
 				if p.TSJitter {
-					//TODO
+					//Add +- 5us jitter to timestamp
+					t += int64(float64(rng.Uint32())/float64(math.MaxUint32/10000)) - 5000
 				}
+				point := iface.Point{Time: t, Value: v}
+				cursor += period
 				batch = append(batch, point)
 				if len(batch) == p.BatchSize {
 					rv[i] <- batch
