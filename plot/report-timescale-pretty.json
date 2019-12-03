@@ -1,0 +1,202 @@
+{
+  "fingerprint": {
+    "commit": "74e29ed26455e62837b2fb83c9208e95e61c2e20",
+    "desc": "v0.5.1-9-g74e29ed",
+    "repo_clean": "false",
+    "time": "2019-11-19T23:10:41Z"
+  },
+  "benchmarks": {
+    "TestInsert": [
+      {
+        "parameters": {
+          "Insert32Bit": "true",
+          "InsertBatchSize": "100",
+          "InsertNumStreams": "10",
+          "InsertSpanSeconds": "20000",
+          "InsertSubsample": "1",
+          "InsertTSJitter": "false"
+        },
+        "results": {
+          "FullParallelInsert.Duration": 160681.536,
+          "FullParallelInsert.MPPS": 0.14889451890726263,
+          "FullParallelInsert.Points": 23924600,
+          "Insert.Duration": 161316.442,
+          "Insert.MPPS": 0.14877590717008252,
+          "Insert.Points": 24000000,
+          "StreamCreation": 13.57
+        }
+      },
+      {
+        "parameters": {
+          "Insert32Bit": "false",
+          "InsertBatchSize": "100",
+          "InsertNumStreams": "10",
+          "InsertSpanSeconds": "20000",
+          "InsertSubsample": "1",
+          "InsertTSJitter": "true"
+        },
+        "results": {
+          "FullParallelInsert.Duration": 155916.38,
+          "FullParallelInsert.MPPS": 0.15359130323574727,
+          "FullParallelInsert.Points": 23947400,
+          "Insert.Duration": 156461.086,
+          "Insert.MPPS": 0.15339277397064724,
+          "Insert.Points": 24000000,
+          "StreamCreation": 15.192
+        }
+      },
+      {
+        "parameters": {
+          "Insert32Bit": "true",
+          "InsertBatchSize": "100",
+          "InsertNumStreams": "10",
+          "InsertSpanSeconds": "20000",
+          "InsertSubsample": "1",
+          "InsertTSJitter": "true"
+        },
+        "results": {
+          "FullParallelInsert.Duration": 175288.016,
+          "FullParallelInsert.MPPS": 0.13516440279636685,
+          "FullParallelInsert.Points": 23692700,
+          "Insert.Duration": 179315.32,
+          "Insert.MPPS": 0.133842440233216,
+          "Insert.Points": 24000000,
+          "StreamCreation": 12.031
+        }
+      },
+      {
+        "parameters": {
+          "Insert32Bit": "false",
+          "InsertBatchSize": "100",
+          "InsertNumStreams": "5",
+          "InsertSpanSeconds": "20000",
+          "InsertSubsample": "1",
+          "InsertTSJitter": "false"
+        },
+        "results": {
+          "FullParallelInsert.Duration": 96374.21,
+          "FullParallelInsert.MPPS": 0.12396158681871425,
+          "FullParallelInsert.Points": 11946700,
+          "Insert.Duration": 97013.828,
+          "Insert.MPPS": 0.12369370683940026,
+          "Insert.Points": 12000000,
+          "StreamCreation": 10.31
+        }
+      },
+      {
+        "parameters": {
+          "Insert32Bit": "true",
+          "InsertBatchSize": "100",
+          "InsertNumStreams": "5",
+          "InsertSpanSeconds": "20000",
+          "InsertSubsample": "1",
+          "InsertTSJitter": "false"
+        },
+        "results": {
+          "FullParallelInsert.Duration": 95862.185,
+          "FullParallelInsert.MPPS": 0.12386114503857805,
+          "FullParallelInsert.Points": 11873600,
+          "Insert.Duration": 97109.594,
+          "Insert.MPPS": 0.12357172454041977,
+          "Insert.Points": 12000000,
+          "StreamCreation": 8.597
+        }
+      },
+      {
+        "parameters": {
+          "Insert32Bit": "false",
+          "InsertBatchSize": "100",
+          "InsertNumStreams": "5",
+          "InsertSpanSeconds": "20000",
+          "InsertSubsample": "1",
+          "InsertTSJitter": "true"
+        },
+        "results": {
+          "FullParallelInsert.Duration": 91662.149,
+          "FullParallelInsert.MPPS": 0.12878052859092362,
+          "FullParallelInsert.Points": 11804300,
+          "Insert.Duration": 93890.063,
+          "Insert.MPPS": 0.12780905259377662,
+          "Insert.Points": 12000000,
+          "StreamCreation": 8.593
+        }
+      },
+      {
+        "parameters": {
+          "Insert32Bit": "true",
+          "InsertBatchSize": "100",
+          "InsertNumStreams": "5",
+          "InsertSpanSeconds": "20000",
+          "InsertSubsample": "1",
+          "InsertTSJitter": "true"
+        },
+        "results": {
+          "FullParallelInsert.Duration": 95139.714,
+          "FullParallelInsert.MPPS": 0.1260094181069327,
+          "FullParallelInsert.Points": 11988500,
+          "Insert.Duration": 95336.104,
+          "Insert.MPPS": 0.12587046770864477,
+          "Insert.Points": 12000000,
+          "StreamCreation": 9.751
+        }
+      },
+      {
+        "parameters": {
+          "Insert32Bit": "false",
+          "InsertBatchSize": "100",
+          "InsertNumStreams": "10",
+          "InsertSpanSeconds": "20000",
+          "InsertSubsample": "1",
+          "InsertTSJitter": "false"
+        },
+        "results": {
+          "FullParallelInsert.Duration": 161518.985,
+          "FullParallelInsert.MPPS": 0.14689047234911737,
+          "FullParallelInsert.Points": 23725600,
+          "Insert.Duration": 164016.12,
+          "Insert.MPPS": 0.14632708053330368,
+          "Insert.Points": 24000000,
+          "StreamCreation": 12.611
+        }
+      }
+    ],
+    "TestSequentialReadParallelStream": [
+      {
+        "parameters": {
+          "SequentialReadParallelNum": "10"
+        },
+        "results": {
+          "FullParallelSequentialRead.Duration": 4565.419,
+          "FullParallelSequentialRead.MPPS": 4.052639856276062,
+          "FullParallelSequentialRead.Points": 18501999,
+          "SequentialRead.Duration": 6812.244,
+          "SequentialRead.MPPS": 3.5230672888405055,
+          "SequentialRead.Points": 23999994
+        }
+      },
+      {
+        "parameters": {
+          "SequentialReadParallelNum": "1"
+        },
+        "results": {
+          "FullParallelSequentialRead.Duration": 2751.809,
+          "FullParallelSequentialRead.MPPS": 0.8721531908646275,
+          "FullParallelSequentialRead.Points": 2399999,
+          "SequentialRead.Duration": 2759.629,
+          "SequentialRead.MPPS": 0.8696817579464486,
+          "SequentialRead.Points": 2399999
+        }
+      }
+    ],
+    "TestSequentialReadSingleStream": [
+      {
+        "parameters": {},
+        "results": {
+          "SingleStreamSequentialRead.Duration": 2759.919,
+          "SingleStreamSequentialRead.MPPS": 0.8695903756595755,
+          "SingleStreamSequentialRead.Points": 2399999
+        }
+      }
+    ]
+  }
+}
