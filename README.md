@@ -1,6 +1,6 @@
 # Ping Things Time Series benchmarks
 
-* NOTE * these are a work in progress, please read the roadmap below
+*NOTE* these are a work in progress, please read the roadmap below
 
 There are many time series databases on the market at the moment and they each have their own
 strengths and weaknesses. Some of these characteristics are qualitative or can be quantified without an experiment
